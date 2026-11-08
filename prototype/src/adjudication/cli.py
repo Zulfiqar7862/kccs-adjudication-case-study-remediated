@@ -51,11 +51,13 @@ def run(workbook,output_dir="output"):
     out=Path(output_dir); out.mkdir(parents=True,exist_ok=True)
     data=load_workbook(workbook); service=CaseService(data)
     evaluated_at=datetime.now(timezone.utc)
-    cases=[service.create_case(e,evaluated_at) for e in data["events"]]
+    for e in data["events"]: service.create_case(e,evaluated_at)
+    cases=list(service.all_attempts.values())
     summary=[]; gaps=[]
     for case in cases:
-        clock_event=next((e for e in case.events if e.event_type=="REGULATORY_CLOCK_CALCULATED"),None)
-        summary.append({"case_id":case.case_id,"event_id":case.event_id,"state":case.state,"disposition":case.disposition,"recommendation":case.recommendation["proposed_disposition"] if case.recommendation else None,"confidence":case.recommendation["confidence"] if case.recommendation else None,"override_reason":case.override_reason,"reopen_count":case.reopen_count,"prior_case_id":case.prior_case_id,"notification_status":clock_event.payload["status"] if clock_event else None,"notification_due_at":clock_event.payload["notification_due_at"] if clock_event else None,"evidence_gap_count":len(case.gaps)})
+        clock_event=next((e for e in case.events if e.event_type in {"REGULATORY_CLOCK_CALCULATED","REGULATORY_CLOCK_LINKED"}),None)
+        clock_payload=clock_event.payload.get("original_clock",clock_event.payload) if clock_event else {}
+        summary.append({"case_id":case.case_id,"event_id":case.event_id,"state":case.state,"disposition":case.disposition,"recommendation":case.recommendation["proposed_disposition"] if case.recommendation else None,"confidence":case.recommendation["confidence"] if case.recommendation else None,"override_reason":case.override_reason,"reopen_count":case.reopen_count,"prior_case_id":case.prior_case_id,"notification_status":clock_payload.get("status"),"notification_due_at":clock_payload.get("notification_due_at"),"evidence_gap_count":len(case.gaps)})
         gaps.extend(case.gaps)
     counts={"excursion_events":len(data["events"]),"cases":len(cases),"reviewer_queue_records":len(data["reviewer_queue"]),"products":len(data["products"]),"facilities":len(data["facilities"]),"sop_revisions":len(data["sops"]),"stability_studies":len(data["studies"]),"confirmed_aliases":len(data["aliases"]),"override_reasons":len(data["overrides"])}
     report=build_report(cases,counts,evaluated_at,workbook)

@@ -42,6 +42,8 @@ class CaseService:
     def create_case(self,event,evaluated_at=None):
         at=evaluated_at or datetime.now(timezone.utc)
         case=Case(f"CASE-{event.event_id}",event.event_id,"DETECTED",at)
+        if case.case_id in self.all_attempts:raise ValueError('Duplicate event_id in replay')
+        self.all_attempts[case.case_id]=case
         self._event(case,"CASE_CREATED","system","TRIAGE",{"source_event_id":event.event_id},at)
         clock=calculate_clock(event,at,self.default_window)
         self._event(case,"REGULATORY_CLOCK_CALCULATED","regulatory_clock_service","EVIDENCE_COLLECTION",clock,at)
@@ -60,8 +62,8 @@ class CaseService:
             case.disposition=event.disposition
             self._event(case,"DISPOSITION_RECORDED","reviewer","DISPOSITIONED",{"disposition":event.disposition},at)
         if event.readjudicated:
-            case=self.reopen_case(case,"TT-CB-114 re-adjudication",at)
-            clock=calculate_clock(event,at,self.default_window)
+            case=self.reopen_case(case,"Source reopened_later flag; actual reopen time and pre/post evidence not supplied",at)
+            clock=next(x.payload for x in case.events if x.event_type=='REGULATORY_CLOCK_LINKED')['original_clock']
             pres=self.resolve_product(event)
             fres=self.resolver.resolve(event.facility_ref,"facility",{f.facility_ref for f in self.facilities})
             product,facility,study,sop,gaps=self._resolve_evidence(case,event,pres,fres,at)
@@ -73,5 +75,14 @@ class CaseService:
     def reopen_case(self,case,reason,at=None):
         at=at or datetime.now(timezone.utc)
         reopened=Case(f"{case.case_id}-REOPEN-{case.reopen_count+1}",case.event_id,"REOPENED",at,case.reopen_count+1,case.case_id)
+        self.all_attempts.setdefault(case.case_id,case)
+        self.all_attempts[reopened.case_id]=reopened
+        clocks=[x for x in case.events if x.event_type in {'REGULATORY_CLOCK_CALCULATED','REGULATORY_CLOCK_LINKED'}]
+        if clocks:
+            original=clocks[0]
+            clock=original.payload.get('original_clock',original.payload)
+            clock_id=original.payload.get('original_clock_event_id',original.event_id)
+            from copy import deepcopy
+            self._event(reopened,'REGULATORY_CLOCK_LINKED','system','REOPENED',{'original_clock_event_id':clock_id,'original_clock':deepcopy(clock)},at)
         self._event(reopened,"CASE_REOPENED","qa_or_platform","EVIDENCE_COLLECTION",{"reason":reason,"prior_case_id":case.case_id,"prior_state":case.state},at)
         return reopened
