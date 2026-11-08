@@ -57,3 +57,7 @@ def test_calendar_days_follow_local_wall_time_across_dst():
     p=NotificationPolicy('SYNTHETIC-CALENDAR','calendar_days',timezone='America/New_York',days=5)
     a=datetime.fromisoformat('2026-03-06T12:00:00+00:00')
     assert (policy_due(a,p)-a).total_seconds()==119*3600
+
+def test_settings_do_not_suggest_a_default_legal_window():
+    from adjudication.config import load_settings
+    assert load_settings().default_reg_window_hours is None
