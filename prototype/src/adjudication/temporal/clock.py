@@ -18,8 +18,6 @@ class NotificationPolicy:
 def resolve_policy(event):
     # Supplied row window is retained as an EXTRACTED historical policy claim,
     # not a legal opinion or a conversion of next-business-day to 24 hours.
-    if event.reg_window_hours is not None:
-        return NotificationPolicy('extract:reg_window_hours','extracted_hours',event.reg_window_hours)
     jurisdiction=event.raw.get('jurisdiction')
     facts={'BR':120, 'IN_NOTIFIABLE':360, 'EU_72H_MARKET_CONFIRMED':72}
     if jurisdiction in facts:
@@ -44,11 +42,13 @@ def calculate_clock(event,evaluated_at=None,default_window=None,policy=None):
     at=evaluated_at or datetime.now(timezone.utc)
     if at.tzinfo is None:raise ValueError('evaluated_at must be timezone-aware')
     applicability='REPORTABLE' if event.regulator_reportable is True else ('NOT_REPORTABLE' if event.regulator_reportable is False else 'UNKNOWN')
-    result={'alert_ts_utc':event.alert_ts_utc.isoformat(),'evaluated_at':at.isoformat(),'applicability':applicability,'policy_status':'NOT_RESOLVED','policy_id':None,'policy_version':None,'notification_evidence':'UNKNOWN','notification_due_at':None,'status':'APPLICABILITY_UNKNOWN','notified':None,'is_breach':False,'hours_elapsed':round((at-event.alert_ts_utc).total_seconds()/3600,3),'hours_remaining':None}
+    result={'alert_ts_utc':event.alert_ts_utc.isoformat(),'evaluated_at':at.isoformat(),'applicability':applicability,'policy_status':'NOT_RESOLVED','policy_id':None,'policy_version':None,'notification_evidence':'UNKNOWN','notification_due_at':None,'status':'APPLICABILITY_UNKNOWN','notified':None,'is_breach':False,'hours_elapsed':round((at-event.alert_ts_utc).total_seconds()/3600,3),'hours_remaining':None,'source_window_assessment':None,'source_window_hours':event.reg_window_hours}
     if applicability=='NOT_REPORTABLE':
         result['status']='INPUT_CONFLICT' if event.hours_to_notification is not None else 'NOT_APPLICABLE'
         return result
     if applicability=='UNKNOWN':return result
+    if event.reg_window_hours is not None and event.hours_to_notification is not None and isfinite(event.reg_window_hours) and event.reg_window_hours>0 and isfinite(event.hours_to_notification) and event.hours_to_notification>=0:
+        result['source_window_assessment']='EXTRACTED_RECEIPT_AFTER_WINDOW' if event.hours_to_notification>event.reg_window_hours else 'EXTRACTED_RECEIPT_WITHIN_WINDOW'
     policy=policy or resolve_policy(event)
     due=policy_due(event.alert_ts_utc,policy)
     if due is None:result['status']='POLICY_UNKNOWN';return result

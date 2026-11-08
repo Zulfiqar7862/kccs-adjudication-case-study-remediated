@@ -1,6 +1,6 @@
 from dataclasses import replace
 from datetime import timedelta, datetime, timezone
-from adjudication.temporal.clock import calculate_clock
+from adjudication.temporal.clock import calculate_clock, NotificationPolicy
 
 def test_nonreportable_has_no_obligation(event):
     r=calculate_clock(replace(event,regulator_reportable=False,reg_window_hours=None),event.alert_ts_utc+timedelta(days=10))
@@ -16,14 +16,14 @@ def test_unknown_applicability_is_not_false(event):
 
 def test_unknown_receipt_vs_proved_absence(event):
     e=replace(event,regulator_reportable=True)
-    assert calculate_clock(e,e.alert_ts_utc+timedelta(days=3))['status']=='NOTIFICATION_STATUS_UNKNOWN'
+    assert calculate_clock(e,e.alert_ts_utc+timedelta(days=3),policy=NotificationPolicy('SYNTHETIC','hours',48))['status']=='NOTIFICATION_STATUS_UNKNOWN'
     e.raw={'notification_confirmed_absent':True}
-    assert calculate_clock(e,e.alert_ts_utc+timedelta(days=3))['status']=='OVERDUE_NOT_NOTIFIED'
+    assert calculate_clock(e,e.alert_ts_utc+timedelta(days=3),policy=NotificationPolicy('SYNTHETIC','hours',48))['status']=='OVERDUE_NOT_NOTIFIED'
 
 def test_receipt_exact_boundary_and_future_receipt(event):
     e=replace(event,regulator_reportable=True,hours_to_notification=48)
-    assert calculate_clock(e,e.alert_ts_utc+timedelta(hours=49))['status']=='NOTIFIED_WITHIN_WINDOW'
-    assert calculate_clock(e,e.alert_ts_utc+timedelta(hours=2))['notification_evidence']=='NOT_YET_OBSERVED'
+    assert calculate_clock(e,e.alert_ts_utc+timedelta(hours=49),policy=NotificationPolicy('SYNTHETIC','hours',48))['status']=='NOTIFIED_WITHIN_WINDOW'
+    assert calculate_clock(e,e.alert_ts_utc+timedelta(hours=2),policy=NotificationPolicy('SYNTHETIC','hours',48))['notification_evidence']=='NOT_YET_OBSERVED'
 
 def test_explicit_business_calendar_requires_context(event):
     from adjudication.temporal.clock import NotificationPolicy

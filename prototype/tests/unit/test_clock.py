@@ -1,5 +1,8 @@
 from datetime import timedelta
-from adjudication.temporal.clock import calculate_clock
+from adjudication.temporal.clock import calculate_clock as assess, NotificationPolicy
+
+def calculate_clock(event,**kwargs):
+    return assess(event,policy=NotificationPolicy("SYNTHETIC-48H","hours",48),**kwargs)
 
 def test_clock_uses_alert_time(event):
     status=calculate_clock(event,evaluated_at=event.alert_ts_utc+timedelta(hours=10))
