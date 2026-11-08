@@ -29,7 +29,7 @@ python -m adjudication.cli run --workbook prototype/output/synthetic.xlsx --outp
 CI executes this synthetic CLI, tests, Bandit, pip-audit and Gitleaks. Those workflow definitions are real, but no remote workflow run or publication was performed during remediation.
 
 ## Output contract
-Seven files: `adjudication_report.json`, `case_summary.csv`, `evidence_gaps.csv`, `audit_log.jsonl`, `run_manifest.json`, `rejected_rows.csv`, `comparison_report.json`. The supplied extract yields 420 source events and 481 attempts (61 reopen flags), not 481 independent regulatory clocks. Read the actual filenames in `cli.py` if integrating; all are local mutable exports. Fixed input, revision and `--as-at` reproduce bytes; this is not bitemporal reconstruction or seven-year immutable retention.
+Seven files: `adjudication_report.json`, `adjudication_summary.csv`, `evidence_gaps.csv`, `case_audit_log.csv`, `run_manifest.json`, `rejected_rows.csv`, `comparison_report.json`. The supplied extract yields 420 source events and 481 attempts (61 reopen flags), not 481 independent regulatory clocks. Read the actual filenames in `cli.py` if integrating; all are local mutable exports. Fixed input, revision and `--as-at` reproduce bytes; this is not bitemporal reconstruction or seven-year immutable retention.
 
 `historical_disposition` and `HISTORICAL_DISPOSITION_IMPORTED` describe source history; `new_approval` is always null. Compatibility field `proposed_disposition` contains an **advisory review action**, not a regulated outcome. Source `NON_ACTIONABLE` is parsed but is never permission to auto-close. The comparison report intentionally does not equate advisory actions with historical disposition labels or claim model accuracy.
 

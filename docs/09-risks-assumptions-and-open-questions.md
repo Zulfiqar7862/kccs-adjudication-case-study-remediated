@@ -1,7 +1,7 @@
 # Remaining gaps and limits
 
 Implemented offline safeguards are not a production certification. Remaining work, prioritized:
-1. Qualify authoritative jurisdiction/applicability policies with regulators/legal owners: actual two EU markets, Brazil localized five-calendar-day semantics, India notifiable-product mapping, exact US state/calendar/holidays/cutoff and evidence of submissions.
+1. Qualify authoritative jurisdiction/applicability policies with regulators/legal owners: actual two EU markets, Brazil authoritative local notification timezone/applicability, India notifiable-product mapping, exact US state/calendar/holidays/cutoff and evidence of submissions.
 2. Acquire controlled study/SOP/annexure bodies, temperature series and authoritative product/presentation/strength mappings. Resolve source conflicts with recorded human authority; no OCR/margin-note acceptance limit is inferred. August14,2025 reproduction is NOT TESTABLE from supplied evidence.
 3. Implement independently evaluated closure authority and qualified disposition shadow replay with explained outcome diffs, QA approval before every change and model-sunset/manual fallback. Current advisory comparison does not satisfy this gate.
 4. Implement fair tenant/deadline scheduling and coalescing with labeled1,912-in38minute storm stress, independent clock monitoring and recovery. No scheduler/burst assurance is claimed.
