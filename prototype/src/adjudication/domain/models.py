@@ -29,6 +29,11 @@ class Facility:
 @dataclass
 class SOP:
     doc_id:str; revision:str|None; effective_from:datetime|None; effective_to:datetime|None; supersedes_text:str|None
+    tenant_code:str|None=None
+    title:str|None=None
+    facilities:str|None=None
+    acceptance_location:str|None=None
+    source_row:int|None=None
 
 @dataclass
 class Study:

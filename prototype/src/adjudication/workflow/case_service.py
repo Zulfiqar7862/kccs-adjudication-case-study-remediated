@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from ..domain.models import Case, CaseEvent
 from ..identity.resolver import IdentityResolver
 from ..temporal.clock import calculate_clock
-from ..temporal.effective_dating import select_effective
+from ..temporal.effective_dating import select_effective, resolve_sops
 from ..evidence.gaps import evidence_gaps
 from ..rules.engine import evaluate
 from ..recommendations.assistant_stub import LLMRationaleService
@@ -32,9 +32,11 @@ class CaseService:
         facility=next((f for f in self.facilities if f.facility_ref==fres['canonical']),None)
         study,eligibility=study_eligibility(product,self.studies,event.raw.get('tenant_code'))
         case.study_eligibility=eligibility
-        sop=select_effective(self.sops,event.alert_ts_utc)
+        scope_date=event.excursion_start_utc or event.alert_ts_utc
+        case.sop_resolution=resolve_sops(self.sops,event.raw.get('tenant_code'),scope_date,event.facility_ref,event.raw.get('dest_ref_as_received'))
+        sop=None  # No metadata-only limit is asserted as governing authority.
         gaps=evidence_gaps(case.case_id,study,product.storage_spec_text if product else None)
-        for issue in eligibility['issues']:gaps.append({'case_id':case.case_id,'gap_type':issue,'severity':'high','detail':'Source study pointer is not eligible; human evidence resolution required.'})
+        for issue in eligibility['issues']+case.sop_resolution['issues']:gaps.append({'case_id':case.case_id,'gap_type':issue,'severity':'high','detail':'Source study pointer is not eligible; human evidence resolution required.'})
         case.gaps.extend(gaps)
         return product,facility,study,sop,gaps
     def create_case(self,event,evaluated_at=None):
@@ -49,7 +51,7 @@ class CaseService:
         recommendation=evaluate(case.case_id,clock,gaps,study,event.triage_outcome,event.regulator_reportable)
         case.recommendation=recommendation
         rationale=self.llm.draft(recommendation,gaps)
-        self._event(case,"RECOMMENDATION_GENERATED","deterministic_rules","PENDING_REVIEWER",{"recommendation":recommendation,"rationale":rationale,"product_resolution":pres,"facility_resolution":fres,"applicable_sop":sop.doc_id if sop else None,"study_eligibility":case.study_eligibility},at)
+        self._event(case,"RECOMMENDATION_GENERATED","deterministic_rules","PENDING_REVIEWER",{"recommendation":recommendation,"rationale":rationale,"product_resolution":pres,"facility_resolution":fres,"applicable_sop":sop.doc_id if sop else None,"study_eligibility":case.study_eligibility,"sop_resolution":case.sop_resolution},at)
         override=self.overrides.get(event.event_id)
         if override:
             case.override_reason=override.reason
@@ -66,7 +68,7 @@ class CaseService:
             recommendation=evaluate(case.case_id,clock,gaps,study,event.triage_outcome,event.regulator_reportable)
             case.recommendation=recommendation
             rationale=self.llm.draft(recommendation,gaps)
-            self._event(case,"RECOMMENDATION_GENERATED","deterministic_rules","PENDING_REVIEWER",{"recommendation":recommendation,"rationale":rationale,"product_resolution":pres,"facility_resolution":fres,"applicable_sop":sop.doc_id if sop else None,"study_eligibility":case.study_eligibility},at)
+            self._event(case,"RECOMMENDATION_GENERATED","deterministic_rules","PENDING_REVIEWER",{"recommendation":recommendation,"rationale":rationale,"product_resolution":pres,"facility_resolution":fres,"applicable_sop":sop.doc_id if sop else None,"study_eligibility":case.study_eligibility,"sop_resolution":case.sop_resolution},at)
         return case
     def reopen_case(self,case,reason,at=None):
         at=at or datetime.now(timezone.utc)
