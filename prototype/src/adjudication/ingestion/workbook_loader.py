@@ -1,5 +1,7 @@
 from __future__ import annotations
 import pandas as pd
+from math import isfinite
+from datetime import datetime,timezone,timedelta
 from ..exceptions import WorkbookSchemaError
 
 def norm(v): return str(v).strip().lower().replace(" ","_").replace("-","_")
@@ -26,6 +28,27 @@ def to_utc(v):
 def to_float(v):
     try: f=float(v)
     except (TypeError,ValueError): return None
-    return None if pd.isna(f) else f
+    return f if isfinite(f) else None
 
-def to_bool(v): return isinstance(v,bool) and v or str(v).strip().lower() in {"true","yes","y","1","opened"}
+def to_bool(v):
+    value=str(v).strip().casefold()
+    if value in {'true','yes','y','1','opened'}:return True
+    if value in {'false','no','n','0'}:return False
+    return None
+
+def to_offset_hours(v):
+    value=clean(v)
+    if value is None:return None
+    try:
+        if ':' not in value:return to_float(value)
+        sign=-1 if value.startswith('-') else 1
+        hours,minutes=map(int,value.lstrip('+-').split(':'))
+        if hours>14 or minutes>=60:return None
+        return sign*(hours+minutes/60)
+    except ValueError:return None
+
+def local_to_utc(value,offset):
+    value=clean(value)
+    if not value or offset is None:return None
+    try:return datetime.fromisoformat(value).replace(tzinfo=timezone(timedelta(hours=offset))).astimezone(timezone.utc).isoformat()
+    except ValueError:return None
