@@ -4,7 +4,7 @@ Executable dataclasses are in `prototype/src/adjudication/domain/models.py`; CSV
 
 SOP candidates retain tenant, document family, facility scope, revision dates and annexure location. Multiple effective revisions in the same family conflict; no `ORDER BY effective_from DESC LIMIT1` override is permitted. Unknown free-text facility scope and missing annexure contents abstain. Business applicability uses excursion start (explicit alert fallback), not today's latest revision.
 
-Study eligibility requires tenant ownership, presentation/purpose/readability and a qualified relationship, not matching brand text alone. The prototype checks metadata and raises uncertainty; no validated stability-envelope arithmetic is implemented.
+Study metadata eligibility checks tenant ownership, presentation/purpose/readability and relationship qualification, not matching brand text alone. The supplied index has no controlled identifier/strength attestation, so real study pointers remain candidates with STUDY_RELATIONSHIP_UNVERIFIED even when brand/presentation agree. Explicit identifier relationships in synthetic tests exercise the positive path, not a fabricated qualification of company evidence. No validated stability-envelope arithmetic is implemented.
 
 Notification result separates `applicability`, `policy_status`, `notification_evidence`, `status`, optional due time and `source_window_assessment`. Imported `reg_window_hours` is an observation, not an authoritative legal policy. Receipt offset is source evidence, not a submission event made by this tool.
 

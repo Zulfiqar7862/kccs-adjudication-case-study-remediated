@@ -19,7 +19,7 @@ def study_eligibility(product,studies,tenant):
     # Exact canonical identifier is an explicit synthetic/source relationship;
     # human-written study descriptions require presentation and molecule checks.
     if not (product.source_row is None and s.product_ref==product.product_ref):
-        if s.product_ref==product.product_name:result['issues'].append('STUDY_RELATIONSHIP_UNVERIFIED')
+        result['issues'].append('STUDY_RELATIONSHIP_UNVERIFIED')
         if pp and sp and pp!=sp:result['issues'].append('STUDY_PRESENTATION_CONFLICT')
         elif pp is None or sp is None:result['issues'].append('STUDY_PRESENTATION_UNVERIFIED')
         if (product.product_name or '').split() and (product.product_name or '').split()[0].casefold() not in (s.product_ref or '').casefold():result['issues'].append('STUDY_PRODUCT_UNVERIFIED')
