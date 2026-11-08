@@ -15,6 +15,7 @@ def calculate_clock(event:ExcursionEvent,evaluated_at:datetime|None=None,default
     else:
         notified=event.hours_to_notification<=window
         if notified: status="NOTIFIED_WITHIN_WINDOW"
+        elif event.hours_to_notification>window: status="NOTIFIED_LATE"
         elif remaining<0: status="OVERDUE_NOT_NOTIFIED"
-        else: status="NOTIFIED_LATE"
+        else: status="OPEN"
     return {"alert_ts_utc":event.alert_ts_utc.isoformat(),"notification_due_at":due.isoformat(),"evaluated_at":evaluated_at.isoformat(),"hours_elapsed":round(elapsed,3),"hours_remaining":round(remaining,3),"status":status,"notified":notified,"is_breach":status in {"NOTIFIED_LATE","OVERDUE_NOT_NOTIFIED"}}
