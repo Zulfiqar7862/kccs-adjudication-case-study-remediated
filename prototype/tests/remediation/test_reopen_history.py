@@ -21,3 +21,10 @@ def test_all_real_reopened_parents_survive(workbook_data):
     reopened=[c for c in s.all_attempts.values() if c.prior_case_id]
     assert len(reopened)==61 and all(c.prior_case_id in s.all_attempts for c in reopened)
     assert sum(x.event_type=='REGULATORY_CLOCK_CALCULATED' for c in s.all_attempts.values() for x in c.events)==420
+
+def test_reopen_same_parent_twice_never_overwrites_attempt(event,data):
+    s=CaseService(data);parent=s.create_case(event,event.alert_ts_utc)
+    a=s.reopen_case(parent,'first',event.alert_ts_utc)
+    b=s.reopen_case(parent,'second',event.alert_ts_utc)
+    assert a.case_id!=b.case_id and len(s.all_attempts)==3
+    assert s.all_attempts[a.case_id] is a

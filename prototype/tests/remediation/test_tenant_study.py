@@ -23,3 +23,14 @@ def test_wrong_presentation_blocks(event,data):
     a=Product('SKU','Glucodyne SoloJet 100U','2-8','VIAL','A')
     c=CaseService({**data,'products':[a],'studies':[Study('VIAL','Glucodyne 100U — vial',True,'ok','limit','A')]}).create_case(replace(event,product_ref='SKU',raw={'tenant_code':'A'}),event.alert_ts_utc)
     assert any(g['gap_type']=='STUDY_PRESENTATION_CONFLICT' for g in c.gaps)
+
+def test_facility_resolution_cannot_cross_tenant(event,data):
+    from adjudication.domain.models import Facility
+    a=Facility('SHARED','Tenant A site','UTC','A')
+    b=Facility('SHARED','Tenant B site','UTC','B')
+    s=CaseService({**data,'facilities':[a,b]})
+    e=replace(event,facility_ref='SHARED',raw={'tenant_code':'B'})
+    r=s.resolve_facility(e)
+    assert r['tenant_code']=='B' and r['canonical']=='SHARED'
+    e.raw={}
+    assert s.resolve_facility(e)['canonical'] is None
