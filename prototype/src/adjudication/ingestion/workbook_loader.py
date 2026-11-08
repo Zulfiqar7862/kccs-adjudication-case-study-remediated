@@ -4,13 +4,14 @@ from ..exceptions import WorkbookSchemaError
 
 def norm(v): return str(v).strip().lower().replace(" ","_").replace("-","_")
 
-def resolve_columns(df,aliases,sheet):
+def resolve_columns(df,aliases,sheet,optional=()):
     available={norm(c):c for c in df.columns}; resolved={}; missing=[]
     for logical,candidates in aliases.items():
         for candidate in candidates:
             key=norm(candidate)
             if key in available: resolved[logical]=available[key]; break
-        else: missing.append(logical)
+        else:
+            if logical not in optional: missing.append(logical)
     if missing: raise WorkbookSchemaError(f"Sheet '{sheet}' missing {missing}; available: {list(df.columns)}")
     return resolved
 
