@@ -38,3 +38,22 @@ def test_unknown_jurisdiction_is_not_legal_breach_even_with_extracted_window(eve
     r=calculate_clock(e,e.alert_ts_utc+timedelta(days=10))
     assert r['status']=='POLICY_UNKNOWN' and not r['is_breach']
     assert r['source_window_assessment']=='EXTRACTED_RECEIPT_AFTER_WINDOW'
+
+def test_receipt_evidence_is_independent_of_unknown_policy(event):
+    e=replace(event,regulator_reportable=True,hours_to_notification=100,raw={})
+    r=calculate_clock(e,e.alert_ts_utc+timedelta(days=10))
+    assert r['status']=='POLICY_UNKNOWN' and r['notification_evidence']=='EXTRACTED_RECEIPT'
+    assert r['notified'] is True and not r['is_breach']
+
+def test_brazil_requires_explicit_local_timezone(event):
+    e=replace(event,regulator_reportable=True,raw={'jurisdiction':'BR'})
+    assert calculate_clock(e,e.alert_ts_utc)['status']=='POLICY_UNKNOWN'
+    e.raw['notification_timezone']='America/Sao_Paulo'
+    assert calculate_clock(e,e.alert_ts_utc)['notification_due_at']==(e.alert_ts_utc+timedelta(days=5)).isoformat()
+
+def test_calendar_days_follow_local_wall_time_across_dst():
+    from adjudication.temporal.clock import policy_due
+    from datetime import datetime
+    p=NotificationPolicy('SYNTHETIC-CALENDAR','calendar_days',timezone='America/New_York',days=5)
+    a=datetime.fromisoformat('2026-03-06T12:00:00+00:00')
+    assert (policy_due(a,p)-a).total_seconds()==119*3600
