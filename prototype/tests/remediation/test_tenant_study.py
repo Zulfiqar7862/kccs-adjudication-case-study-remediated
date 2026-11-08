@@ -34,3 +34,12 @@ def test_facility_resolution_cannot_cross_tenant(event,data):
     assert r['tenant_code']=='B' and r['canonical']=='SHARED'
     e.raw={}
     assert s.resolve_facility(e)['canonical'] is None
+
+def test_matching_brand_and_presentation_does_not_attest_strength(event,data):
+    from adjudication.domain.models import Product,Study
+    p=Product('SKU','Glucodyne SoloJet 100U','2-8','S','A',source_row=2)
+    s=Study('S','Glucodyne SoloJet 200U pen stability report',True,'ok','6 hours','A',source_row=3)
+    c=CaseService({**data,'products':[p],'studies':[s]}).create_case(replace(event,product_ref='SKU',raw={'tenant_code':'A'}),event.alert_ts_utc)
+    payload=next(x.payload for x in c.events if x.event_type=='RECOMMENDATION_GENERATED')
+    assert payload['study_eligibility']['study_ref'] is None
+    assert any(g['gap_type']=='STUDY_RELATIONSHIP_UNVERIFIED' for g in c.gaps)
