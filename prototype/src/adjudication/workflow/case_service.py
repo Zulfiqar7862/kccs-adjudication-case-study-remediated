@@ -20,7 +20,12 @@ class CaseService:
     def resolve_product(self,event):
         tenant=event.raw.get('tenant_code'); value=(event.product_ref or '').strip().casefold()
         candidates=[p for p in self.products if tenant and p.tenant_code==tenant and value in {v.strip().casefold() for v in p.all_identifiers}]
-        return {'source':event.product_ref,'canonical':candidates[0].key if len(candidates)==1 else None,'tenant_code':tenant,'method':'tenant_exact_identifier' if len(candidates)==1 else 'unresolved_or_conflict','confidence':None,'candidates':[p.key for p in candidates]}
+        observations=self.resolver.observations(event.product_ref,'product')
+        proposed=[]
+        if not candidates:
+            names={v.casefold() for a in observations if a.same for v in (a.alias_value,a.canonical_value)}
+            proposed=[p for p in self.products if tenant and p.tenant_code==tenant and names.intersection(v.casefold() for v in p.all_identifiers)]
+        return {'source':event.product_ref,'canonical':candidates[0].key if len(candidates)==1 else None,'tenant_code':tenant,'method':'tenant_exact_identifier' if len(candidates)==1 else 'candidate_requires_human_confirmation' if proposed else 'unresolved_or_conflict','confidence':None,'candidates':[p.key for p in candidates+proposed],'provenance':self.resolver.provenance(observations)}
     def _resolve_evidence(self,case,event,pres,fres,at):
         from ..evidence.eligibility import study_eligibility
         product=next((p for p in self.products if p.key==pres['canonical'] and p.tenant_code==event.raw.get('tenant_code')),None)

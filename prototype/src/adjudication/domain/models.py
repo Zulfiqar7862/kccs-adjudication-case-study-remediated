@@ -39,6 +39,11 @@ class Study:
 @dataclass
 class Alias:
     alias_value:str; canonical_value:str; entity_type:str|None
+    same:bool=True
+    confirmed_by:str|None=None
+    confirmed_on:str|None=None
+    comment:str|None=None
+    source_row:int|None=None
 
 @dataclass
 class Override:
