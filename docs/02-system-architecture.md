@@ -3,7 +3,7 @@
 ## Implemented offline path
 `WorkbookLoader → tenant-scoped source identity → study/SOP eligibility → separated clock assessment → advisory rules → original + linked reopen attempts → seven local exports`.
 
-Inputs are9 relevant structured tabs of the supplied15-tab extract; all15 were read during the remediation investigation. All master product rows and negative alias observations survive loading. Invalid event identifiers/timestamps and duplicate identifiers are rejected with source-row reasons; zero usable events is an error. Metadata does not supply authoritative study tables or handwritten limits.
+Inputs are8 relevant structured tabs of the supplied15-tab extract; all15 were read during the remediation investigation. All master product rows and negative alias observations survive loading. Invalid event identifiers/timestamps and duplicate identifiers are rejected with source-row reasons; zero usable events is an error. Metadata does not supply authoritative study tables or handwritten limits.
 
 `CaseService` owns a dictionary of all attempts for one process. It is not a durable event-sourced service, idempotent delivery adapter or concurrency-safe workflow store. Duplicate events in a replay raise rather than silently overwrite. A crash requires rerunning from the input snapshot; deterministic identifiers support comparison, not transactional delivery guarantees. CLI file writes are ordinary filesystem writes, not atomic multi-file commit. Failures propagate to a nonzero exit. No external queue, model, database or service is contacted in this path.
 
