@@ -19,7 +19,7 @@ PowerShell: create `.venv`, activate `.\.venv\Scripts\Activate.ps1`, run the sam
 ```powershell
 ./prototype/run.ps1 -Workbook "C:\private\KCCS_Sentinel_Reference_Data_Pack.xlsx" -OutputDir "prototype/output" -AsAt "2026-11-08T12:00:00+00:00"
 ```
-Linux PowerShell was exercised; native Windows and Docker are not validated. Docker installs the actual package; mount private data read-only and an output volume if using it. GNU make recipes: `make setup`, `make test`, `make run`, `make e2e`; Make itself was unavailable in the remediation environment. Their equivalent Python commands were exercised.
+Linux PowerShell was exercised; native Windows and Docker are not validated. Docker installs the actual package; mount private data read-only and an output volume if using it. GNU make recipes: `make setup`, `make test`, `make run`, `make e2e`; GNU Make4.4.1 was bootstrapped locally and all six targets were exercised (including `install` and `clean`). The initial bootstrap failed; the documented `--disable-dependency-tracking` configuration resolved that build issue.
 
 ## Safe synthetic CLI without private data
 ```bash

@@ -8,7 +8,7 @@ Implemented offline safeguards are not a production certification. Remaining wor
 5. Implement batch cumulative exposure ledger, lane/carrier/reefer history, Tapti legal-entity/2021 contract resolution, setpoint CSV intake, cause/claim separation. No tenant-safe similar-case retrieval/index is built; Clause22 extends beyond the current scoped master lookup.
 6. Implement dependency-based firmware recall cohort detection, corrected telemetry, actual pre/post readjudication and invoice reversals; the extract's61 reopen flags are not reconstruction of all214 recall cases.
 7. Durable seven-year full-basis retention and one-hour retrieval, authorization/tenant/region enforcement, signatures, multilingual UI and operational observability remain target systems. Local audit files are mutable; no hash-chain/append-only claim.
-8. Native Windows, Docker runtime, real GNU Make and hosted CI have not been exercised here. Unpinned dependency ranges and partial workbook schema validation remain risks. Multi-file output is not transactional.
+8. Native Windows, Docker runtime and hosted CI have not been exercised here. GNU Make4.4.1 was built locally and all six targets were exercised. Unpinned dependency ranges and partial workbook schema validation remain risks. Multi-file output is not transactional.
 9. Missing historical AI sessions and actual effort hours cannot be reconstructed. Covering note must disclose unrecorded hours. No customer approvals or measured board outcomes exist.
 
 Known requirement, not question: retention is seven years. Open questions concern authority, scope, operational policy and provisioning, not whether the requirement exists. No live LLM or broad infrastructure was added to hide these gaps.
