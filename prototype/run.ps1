@@ -2,7 +2,8 @@
 # Usage: .\prototype\run.ps1 -Workbook "data/KCCS_Sentinel_Reference_Data_Pack.xlsx"
 param(
   [string]$Workbook = "data/KCCS_Sentinel_Reference_Data_Pack.xlsx",
-  [string]$OutputDir = "output"
+  [string]$OutputDir = "prototype/output",
+  [string]$AsAt = ""
 )
 
 if (-not (Test-Path $Workbook)) {
@@ -10,4 +11,7 @@ if (-not (Test-Path $Workbook)) {
   exit 1
 }
 
-python -m adjudication.cli run --workbook $Workbook --output-dir $OutputDir
+$cliArgs = @("-m", "adjudication.cli", "run", "--workbook", $Workbook, "--output-dir", $OutputDir)
+if ($AsAt) { $cliArgs += @("--as-at", $AsAt) }
+& python @cliArgs
+exit $LASTEXITCODE

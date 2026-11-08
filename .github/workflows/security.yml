@@ -1,14 +1,20 @@
 name: Security
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-
+on: [push, pull_request]
+permissions:
+  contents: read
 jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Dependency scan
-        run: echo "Add pip-audit or similar in production CI."
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e prototype bandit pip-audit
+      - run: bandit -r prototype/src -ll
+      - run: pip-audit --strict --skip-editable
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

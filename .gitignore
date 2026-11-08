@@ -17,3 +17,13 @@ data/*.xls
 prototype/output/*.json
 prototype/output/*.csv
 !prototype/output/.gitkeep
+# Confidential inputs and all local replay exports, not distributable source.
+*.xlsx
+*.xls
+*.pdf
+output/
+**/output/
+.local-evidence/
+evidence/
+.coverage
+.packaging-probe/
