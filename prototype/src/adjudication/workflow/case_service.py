@@ -10,7 +10,7 @@ from ..rules.engine import evaluate
 from ..recommendations.assistant_stub import LLMRationaleService
 
 class CaseService:
-    def __init__(self,data,default_window=72.0):
+    def __init__(self,data,default_window=None):
         self.products=data["products"]; self.facilities=data["facilities"]; self.sops=data["sops"]; self.studies=data["studies"]
         self.resolver=IdentityResolver(data["aliases"]); self.overrides={o.event_id:o for o in data["overrides"]}
         self.default_window=default_window; self.llm=LLMRationaleService()
@@ -26,17 +26,21 @@ class CaseService:
             names={v.casefold() for a in observations if a.same for v in (a.alias_value,a.canonical_value)}
             proposed=[p for p in self.products if tenant and p.tenant_code==tenant and names.intersection(v.casefold() for v in p.all_identifiers)]
         return {'source':event.product_ref,'canonical':candidates[0].key if len(candidates)==1 else None,'tenant_code':tenant,'method':'tenant_exact_identifier' if len(candidates)==1 else 'candidate_requires_human_confirmation' if proposed else 'unresolved_or_conflict','confidence':None,'candidates':[p.key for p in candidates+proposed],'provenance':self.resolver.provenance(observations)}
+    def resolve_facility(self,event):
+        tenant=event.raw.get('tenant_code');value=(event.facility_ref or '').strip().casefold()
+        matches=[f for f in self.facilities if tenant and f.tenant_code==tenant and f.facility_ref.casefold()==value]
+        return {'source':event.facility_ref,'canonical':matches[0].facility_ref if len(matches)==1 else None,'tenant_code':tenant,'method':'tenant_exact_identifier' if len(matches)==1 else 'facility_scope_unverified','confidence':None,'candidates':[f.facility_ref for f in matches]}
     def _resolve_evidence(self,case,event,pres,fres,at):
         from ..evidence.eligibility import study_eligibility
         product=next((p for p in self.products if p.key==pres['canonical'] and p.tenant_code==event.raw.get('tenant_code')),None)
-        facility=next((f for f in self.facilities if f.facility_ref==fres['canonical']),None)
+        facility=next((f for f in self.facilities if f.facility_ref==fres['canonical'] and f.tenant_code==event.raw.get('tenant_code')),None)
         study,eligibility=study_eligibility(product,self.studies,event.raw.get('tenant_code'))
         case.study_eligibility=eligibility
         scope_date=event.excursion_start_utc or event.alert_ts_utc
         case.sop_resolution=resolve_sops(self.sops,event.raw.get('tenant_code'),scope_date,event.facility_ref,event.raw.get('dest_ref_as_received'))
         sop=None  # No metadata-only limit is asserted as governing authority.
         gaps=evidence_gaps(case.case_id,study,product.storage_spec_text if product else None)
-        for issue in eligibility['issues']+case.sop_resolution['issues']:gaps.append({'case_id':case.case_id,'gap_type':issue,'severity':'high','detail':'Source study pointer is not eligible; human evidence resolution required.'})
+        for issue in eligibility['issues']+case.sop_resolution['issues']+(['FACILITY_TENANT_SCOPE_UNVERIFIED'] if facility is None else []):gaps.append({'case_id':case.case_id,'gap_type':issue,'severity':'high','detail':'Source study pointer is not eligible; human evidence resolution required.'})
         case.gaps.extend(gaps)
         return product,facility,study,sop,gaps
     def create_case(self,event,evaluated_at=None):
@@ -48,7 +52,7 @@ class CaseService:
         clock=calculate_clock(event,at,self.default_window)
         self._event(case,"REGULATORY_CLOCK_CALCULATED","regulatory_clock_service","EVIDENCE_COLLECTION",clock,at)
         pres=self.resolve_product(event)
-        fres=self.resolver.resolve(event.facility_ref,"facility",{f.facility_ref for f in self.facilities})
+        fres=self.resolve_facility(event)
         product,facility,study,sop,gaps=self._resolve_evidence(case,event,pres,fres,at)
         recommendation=evaluate(case.case_id,clock,gaps,study,event.triage_outcome,event.regulator_reportable)
         case.recommendation=recommendation
@@ -65,7 +69,7 @@ class CaseService:
             case=self.reopen_case(case,"Source reopened_later flag; actual reopen time and pre/post evidence not supplied",at)
             clock=next(x.payload for x in case.events if x.event_type=='REGULATORY_CLOCK_LINKED')['original_clock']
             pres=self.resolve_product(event)
-            fres=self.resolver.resolve(event.facility_ref,"facility",{f.facility_ref for f in self.facilities})
+            fres=self.resolve_facility(event)
             product,facility,study,sop,gaps=self._resolve_evidence(case,event,pres,fres,at)
             recommendation=evaluate(case.case_id,clock,gaps,study,event.triage_outcome,event.regulator_reportable)
             case.recommendation=recommendation
@@ -74,7 +78,8 @@ class CaseService:
         return case
     def reopen_case(self,case,reason,at=None):
         at=at or datetime.now(timezone.utc)
-        reopened=Case(f"{case.case_id}-REOPEN-{case.reopen_count+1}",case.event_id,"REOPENED",at,case.reopen_count+1,case.case_id)
+        ordinal=max((c.reopen_count for c in self.all_attempts.values() if c.event_id==case.event_id),default=case.reopen_count)+1
+        reopened=Case(f"CASE-{case.event_id}-REOPEN-{ordinal}",case.event_id,"REOPENED",at,ordinal,case.case_id)
         self.all_attempts.setdefault(case.case_id,case)
         self.all_attempts[reopened.case_id]=reopened
         clocks=[x for x in case.events if x.event_type in {'REGULATORY_CLOCK_CALCULATED','REGULATORY_CLOCK_LINKED'}]

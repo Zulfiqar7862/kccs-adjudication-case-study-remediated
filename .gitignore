@@ -24,6 +24,6 @@ prototype/output/*.csv
 output/
 **/output/
 .local-evidence/
-evidence/
+/evidence/
 .coverage
 .packaging-probe/
