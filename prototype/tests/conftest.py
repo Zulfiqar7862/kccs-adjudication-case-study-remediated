@@ -5,7 +5,7 @@ from adjudication.domain.models import ExcursionEvent, Product, Facility, Study,
 @pytest.fixture
 def event():
     alert=datetime(2026,1,1,12,tzinfo=timezone.utc)
-    return ExcursionEvent("EVT-001",alert,alert-timedelta(hours=2),"PROD-1","FAC-1",11.0,48.0,None,None,None,True,False,{})
+    return ExcursionEvent("EVT-001",alert,alert-timedelta(hours=2),"PROD-1","FAC-1",11.0,48.0,None,None,None,True,False,"ACTIONABLE excursion confirmed",False,False,{})
 
 @pytest.fixture
 def data():

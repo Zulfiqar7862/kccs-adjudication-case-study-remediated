@@ -8,7 +8,9 @@ class ExcursionEvent:
     event_id:str; alert_ts_utc:datetime; excursion_start_utc:datetime|None
     product_ref:str|None; facility_ref:str|None; temperature:float|None
     reg_window_hours:float|None; hours_to_notification:float|None
-    recommendation:str|None; disposition:str|None; case_opened:bool; readjudicated:bool; raw:dict
+    recommendation:str|None; disposition:str|None; case_opened:bool; readjudicated:bool
+    triage_outcome:str|None=None; regulator_reportable:bool|None=None; reviewer_overrode:bool|None=None
+    raw:dict=field(default_factory=dict)
 
 @dataclass
 class Product:

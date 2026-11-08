@@ -6,6 +6,13 @@ def test_clock_uses_alert_time(event):
     assert status["notification_due_at"]==(event.alert_ts_utc+timedelta(hours=48)).isoformat()
     assert status["hours_remaining"]==38 and status["status"]=="OPEN"
 
-def test_clock_overdue(event):
+def test_known_late_notification(event):
+    event.hours_to_notification=50.0
     status=calculate_clock(event,evaluated_at=event.alert_ts_utc+timedelta(hours=73))
-    assert status["status"]=="OVERDUE_NOT_NOTIFIED" and status["is_breach"]
+    assert status["status"]=="NOTIFIED_LATE" and status["is_breach"]
+
+def test_unknown_notification_is_not_breach(event):
+    event.hours_to_notification=None
+    status=calculate_clock(event,evaluated_at=event.alert_ts_utc+timedelta(hours=73))
+    assert status["status"]=="NOTIFICATION_STATUS_UNKNOWN"
+    assert status["notified"] is None and not status["is_breach"]
