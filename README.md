@@ -10,22 +10,48 @@ It includes:
 - Automated tests and GitHub Actions CI
 - A working log of assumptions, discarded approaches, and decisions
 
-## Quick start
+## Windows PowerShell quick start
 
-```bash
+```powershell
+git clone https://github.com/Zulfiqar78634/kccs-adjudication-case-study.git
+cd kccs-adjudication-case-study
+
 python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r prototype/requirements.txt
+pip install -e prototype
 
 # Place the supplied workbook here:
 # data/KCCS_Sentinel_Reference_Data_Pack.xlsx
 
 cd prototype
 pytest
+cd ..
 
-python -m adjudication.cli run \
-  --workbook ../data/KCCS_Sentinel_Reference_Data_Pack.xlsx \
-  --output-dir output
+python -m adjudication.cli run --workbook data/KCCS_Sentinel_Reference_Data_Pack.xlsx --output-dir output
+```
+
+## macOS / Linux quick start
+
+```bash
+git clone https://github.com/Zulfiqar78634/kccs-adjudication-case-study.git
+cd kccs-adjudication-case-study
+
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r prototype/requirements.txt
+pip install -e prototype
+
+# Place the supplied workbook here:
+# data/KCCS_Sentinel_Reference_Data_Pack.xlsx
+
+cd prototype
+pytest
+cd ..
+
+python -m adjudication.cli run --workbook data/KCCS_Sentinel_Reference_Data_Pack.xlsx --output-dir output
 ```
 
 ## What the prototype does

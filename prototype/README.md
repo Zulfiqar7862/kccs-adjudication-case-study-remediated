@@ -2,12 +2,46 @@
 
 This prototype implements the **case adjudication and regulatory-clock service**.
 
-## Run
+## Windows PowerShell quick start
+
+Run these commands from the repository root:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r prototype/requirements.txt
+pip install -e prototype
+```
+
+Place the supplied workbook here:
+
+```text
+data/KCCS_Sentinel_Reference_Data_Pack.xlsx
+```
+
+Then run the tests and prototype from the repository root:
+
+```powershell
+cd prototype
+pytest
+cd ..
+python -m adjudication.cli run --workbook data/KCCS_Sentinel_Reference_Data_Pack.xlsx --output-dir output
+```
+
+## macOS / Linux quick start
 
 ```bash
-python -m adjudication.cli run \\
-  --workbook ../data/KCCS_Sentinel_Reference_Data_Pack.xlsx \\
-  --output-dir output
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r prototype/requirements.txt
+pip install -e prototype
+
+cd prototype
+pytest
+cd ..
+python -m adjudication.cli run --workbook data/KCCS_Sentinel_Reference_Data_Pack.xlsx --output-dir output
 ```
 
 ## Outputs
