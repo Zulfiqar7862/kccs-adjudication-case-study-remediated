@@ -32,3 +32,9 @@ def test_explicit_business_calendar_requires_context(event):
     r=calculate_clock(e,e.alert_ts_utc,policy=p)
     assert r['notification_due_at']=='2026-01-06T22:00:00+00:00'
     assert calculate_clock(e,e.alert_ts_utc,policy=NotificationPolicy('US_UNSPECIFIED','next_business_day'))['status']=='POLICY_UNKNOWN'
+
+def test_unknown_jurisdiction_is_not_legal_breach_even_with_extracted_window(event):
+    e=replace(event,regulator_reportable=True,hours_to_notification=100,raw={})
+    r=calculate_clock(e,e.alert_ts_utc+timedelta(days=10))
+    assert r['status']=='POLICY_UNKNOWN' and not r['is_breach']
+    assert r['source_window_assessment']=='EXTRACTED_RECEIPT_AFTER_WINDOW'
