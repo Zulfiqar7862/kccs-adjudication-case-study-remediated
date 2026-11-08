@@ -47,10 +47,11 @@ def load_workbook(path):
     overrides=records("09_Override_Reasons",OVERRIDE_ALIASES,lambda r,c:Override(clean(r[c["event_id"]]),clean(r[c["reason"]])) if clean(r[c["event_id"]]) and clean(r[c["reason"]]) else None)
     return {"events":events,"reviewer_queue":queue,"products":products,"facilities":facilities,"sops":sops,"studies":studies,"aliases":aliases,"overrides":overrides}
 
-def run(workbook,output_dir="output"):
+def run(workbook,output_dir="output",as_at=None):
     out=Path(output_dir); out.mkdir(parents=True,exist_ok=True)
     data=load_workbook(workbook); service=CaseService(data)
-    evaluated_at=datetime.now(timezone.utc)
+    evaluated_at=datetime.fromisoformat(as_at) if isinstance(as_at,str) else as_at or datetime.now(timezone.utc)
+    if evaluated_at.tzinfo is None: raise ValueError("--as-at requires an explicit UTC offset")
     for e in data["events"]: service.create_case(e,evaluated_at)
     cases=list(service.all_attempts.values())
     summary=[]; gaps=[]
@@ -65,7 +66,14 @@ def run(workbook,output_dir="output"):
     pd.DataFrame(summary).to_csv(out/"adjudication_summary.csv",index=False)
     pd.DataFrame(audit_rows(cases)).to_csv(out/"case_audit_log.csv",index=False)
     pd.DataFrame(gaps).to_csv(out/"evidence_gaps.csv",index=False)
-    (out/"run_manifest.json").write_text(json.dumps({"run_started_at":evaluated_at.isoformat(),"workbook":str(workbook),"rules_version":"deterministic-rules-v1.1.0","prototype_version":"0.1.0","record_counts":counts},indent=2),encoding="utf-8")
+    from hashlib import sha256
+    import subprocess
+    from .rules.engine import RULES_VERSION
+    root=Path(__file__).resolve().parents[3]
+    commit=subprocess.run(["git","-C",str(root),"rev-parse","HEAD"],capture_output=True,text=True,check=False)
+    digest=sha256(Path(workbook).read_bytes()).hexdigest()
+    manifest={"schema_version":"2.0","as_at":evaluated_at.isoformat(),"workbook_sha256":digest,"code_commit":commit.stdout.strip() if commit.returncode==0 else None,"code_commit_status":"git_checkout" if commit.returncode==0 else "archive_no_git_metadata","rules_version":RULES_VERSION,"reference_bundle":{"workbook_sha256":digest,"policy_version":"brief-pack-v1","alias_policy":"one-hop-candidates-v2","sop_policy":"conflicts-abstain-v2"},"audit_semantics":"defensive mutable-file export; no immutable retention guarantee","record_counts":counts}
+    (out/"run_manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
     print(f"Processed {len(cases)} cases from {len(data['events'])} excursion events.")
     print(f"Outputs written to: {out.resolve()}")
     return 0
@@ -73,8 +81,8 @@ def run(workbook,output_dir="output"):
 def main():
     p=argparse.ArgumentParser(description="KCCS excursion adjudication prototype")
     sub=p.add_subparsers(dest="command",required=True)
-    r=sub.add_parser("run"); r.add_argument("--workbook",required=True); r.add_argument("--output-dir",default="output")
+    r=sub.add_parser("run"); r.add_argument("--workbook",required=True); r.add_argument("--output-dir",default="output"); r.add_argument("--as-at",help="Fixed timezone-aware replay instant")
     a=p.parse_args()
-    return run(a.workbook,a.output_dir) if a.command=="run" else 1
+    return run(a.workbook,a.output_dir,a.as_at) if a.command=="run" else 1
 
 if __name__=="__main__": raise SystemExit(main())

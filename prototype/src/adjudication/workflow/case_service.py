@@ -16,7 +16,7 @@ class CaseService:
         self.default_window=default_window; self.llm=LLMRationaleService()
         self.all_attempts={}
     def _event(self,case,etype,actor,new_state,payload,at):
-        e=CaseEvent(str(uuid.uuid4()),case.case_id,etype,at,actor,case.state,new_state,payload); case.events.append(e); case.state=new_state; return e
+        e=CaseEvent(str(uuid.uuid5(uuid.NAMESPACE_URL,f"{case.case_id}|{etype}|{len(case.events)}|{at.isoformat()}")),case.case_id,etype,at,actor,case.state,new_state,payload); case.events.append(e); case.state=new_state; return e
     def resolve_product(self,event):
         tenant=event.raw.get('tenant_code'); value=(event.product_ref or '').strip().casefold()
         candidates=[p for p in self.products if tenant and p.tenant_code==tenant and value in {v.strip().casefold() for v in p.all_identifiers}]
@@ -44,7 +44,7 @@ class CaseService:
         case=Case(f"CASE-{event.event_id}",event.event_id,"DETECTED",at)
         if case.case_id in self.all_attempts:raise ValueError('Duplicate event_id in replay')
         self.all_attempts[case.case_id]=case
-        self._event(case,"CASE_CREATED","system","TRIAGE",{"source_event_id":event.event_id},at)
+        self._event(case,"CASE_CREATED","system","TRIAGE",{"source_event_id":event.event_id,"source_facts":event.raw},at)
         clock=calculate_clock(event,at,self.default_window)
         self._event(case,"REGULATORY_CLOCK_CALCULATED","regulatory_clock_service","EVIDENCE_COLLECTION",clock,at)
         pres=self.resolve_product(event)
@@ -57,10 +57,10 @@ class CaseService:
         override=self.overrides.get(event.event_id)
         if override:
             case.override_reason=override.reason
-            self._event(case,"REVIEWER_OVERRIDE_RECORDED","reviewer","UNDER_REVIEW",{"override_reason":override.reason},at)
+            self._event(case,"HISTORICAL_OVERRIDE_IMPORTED","source_import",case.state,{"override_reason":override.reason,"source_reviewer_id":event.raw.get("reviewer_id")},at)
         if event.disposition:
             case.disposition=event.disposition
-            self._event(case,"DISPOSITION_RECORDED","reviewer","DISPOSITIONED",{"disposition":event.disposition},at)
+            self._event(case,"HISTORICAL_DISPOSITION_IMPORTED","source_import",case.state,{"historical_disposition":event.disposition,"source_reviewer_id":event.raw.get("reviewer_id"),"source_days_to_disposition":event.raw.get("days_to_disposition"),"precision":"source duration rounded; exact original signing time not asserted","chronology":"source latest historical outcome; pre/post recall outcome snapshots unavailable"},at)
         if event.readjudicated:
             case=self.reopen_case(case,"Source reopened_later flag; actual reopen time and pre/post evidence not supplied",at)
             clock=next(x.payload for x in case.events if x.event_type=='REGULATORY_CLOCK_LINKED')['original_clock']
