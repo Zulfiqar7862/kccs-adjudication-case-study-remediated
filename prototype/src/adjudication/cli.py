@@ -79,7 +79,10 @@ def run(workbook,output_dir="output",as_at=None):
     import subprocess
     from .rules.engine import RULES_VERSION
     root=Path(__file__).resolve().parents[3]
-    commit=subprocess.run(["git","-C",str(root),"rev-parse","HEAD"],capture_output=True,text=True,check=False)
+    try:
+        commit=subprocess.run(["git","-C",str(root),"rev-parse","HEAD"],capture_output=True,text=True,check=False)
+    except FileNotFoundError:
+        commit=subprocess.CompletedProcess([],1,stdout="",stderr="git not installed")
     digest=sha256(Path(workbook).read_bytes()).hexdigest()
     manifest={"schema_version":"2.0","as_at":evaluated_at.isoformat(),"workbook_sha256":digest,"code_commit":commit.stdout.strip() if commit.returncode==0 else None,"code_commit_status":"git_checkout" if commit.returncode==0 else "archive_no_git_metadata","rules_version":RULES_VERSION,"reference_bundle":{"workbook_sha256":digest,"policy_version":"brief-pack-v1","alias_policy":"one-hop-candidates-v2","sop_policy":"conflicts-abstain-v2"},"audit_semantics":"defensive mutable-file export; no immutable retention guarantee","record_counts":counts}
     (out/"run_manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
