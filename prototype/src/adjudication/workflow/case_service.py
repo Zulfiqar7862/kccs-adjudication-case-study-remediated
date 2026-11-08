@@ -14,14 +14,22 @@ class CaseService:
         self.products=data["products"]; self.facilities=data["facilities"]; self.sops=data["sops"]; self.studies=data["studies"]
         self.resolver=IdentityResolver(data["aliases"]); self.overrides={o.event_id:o for o in data["overrides"]}
         self.default_window=default_window; self.llm=LLMRationaleService()
+        self.all_attempts={}
     def _event(self,case,etype,actor,new_state,payload,at):
         e=CaseEvent(str(uuid.uuid4()),case.case_id,etype,at,actor,case.state,new_state,payload); case.events.append(e); case.state=new_state; return e
+    def resolve_product(self,event):
+        tenant=event.raw.get('tenant_code'); value=(event.product_ref or '').strip().casefold()
+        candidates=[p for p in self.products if tenant and p.tenant_code==tenant and value in {v.strip().casefold() for v in p.all_identifiers}]
+        return {'source':event.product_ref,'canonical':candidates[0].key if len(candidates)==1 else None,'tenant_code':tenant,'method':'tenant_exact_identifier' if len(candidates)==1 else 'unresolved_or_conflict','confidence':None,'candidates':[p.key for p in candidates]}
     def _resolve_evidence(self,case,event,pres,fres,at):
-        product=next((p for p in self.products if p.product_ref==pres["canonical"]),None)
-        facility=next((f for f in self.facilities if f.facility_ref==fres["canonical"]),None)
-        study=next((s for s in self.studies if product and s.study_ref==product.stability_study_ref),None)
+        from ..evidence.eligibility import study_eligibility
+        product=next((p for p in self.products if p.key==pres['canonical'] and p.tenant_code==event.raw.get('tenant_code')),None)
+        facility=next((f for f in self.facilities if f.facility_ref==fres['canonical']),None)
+        study,eligibility=study_eligibility(product,self.studies,event.raw.get('tenant_code'))
+        case.study_eligibility=eligibility
         sop=select_effective(self.sops,event.alert_ts_utc)
         gaps=evidence_gaps(case.case_id,study,product.storage_spec_text if product else None)
+        for issue in eligibility['issues']:gaps.append({'case_id':case.case_id,'gap_type':issue,'severity':'high','detail':'Source study pointer is not eligible; human evidence resolution required.'})
         case.gaps.extend(gaps)
         return product,facility,study,sop,gaps
     def create_case(self,event,evaluated_at=None):
@@ -30,13 +38,13 @@ class CaseService:
         self._event(case,"CASE_CREATED","system","TRIAGE",{"source_event_id":event.event_id},at)
         clock=calculate_clock(event,at,self.default_window)
         self._event(case,"REGULATORY_CLOCK_CALCULATED","regulatory_clock_service","EVIDENCE_COLLECTION",clock,at)
-        pres=self.resolver.resolve(event.product_ref,"product",{p.product_ref for p in self.products})
+        pres=self.resolve_product(event)
         fres=self.resolver.resolve(event.facility_ref,"facility",{f.facility_ref for f in self.facilities})
         product,facility,study,sop,gaps=self._resolve_evidence(case,event,pres,fres,at)
         recommendation=evaluate(case.case_id,clock,gaps,study,event.triage_outcome,event.regulator_reportable)
         case.recommendation=recommendation
         rationale=self.llm.draft(recommendation,gaps)
-        self._event(case,"RECOMMENDATION_GENERATED","deterministic_rules","PENDING_REVIEWER",{"recommendation":recommendation,"rationale":rationale,"product_resolution":pres,"facility_resolution":fres,"applicable_sop":sop.doc_id if sop else None},at)
+        self._event(case,"RECOMMENDATION_GENERATED","deterministic_rules","PENDING_REVIEWER",{"recommendation":recommendation,"rationale":rationale,"product_resolution":pres,"facility_resolution":fres,"applicable_sop":sop.doc_id if sop else None,"study_eligibility":case.study_eligibility},at)
         override=self.overrides.get(event.event_id)
         if override:
             case.override_reason=override.reason
@@ -47,13 +55,13 @@ class CaseService:
         if event.readjudicated:
             case=self.reopen_case(case,"TT-CB-114 re-adjudication",at)
             clock=calculate_clock(event,at,self.default_window)
-            pres=self.resolver.resolve(event.product_ref,"product",{p.product_ref for p in self.products})
+            pres=self.resolve_product(event)
             fres=self.resolver.resolve(event.facility_ref,"facility",{f.facility_ref for f in self.facilities})
             product,facility,study,sop,gaps=self._resolve_evidence(case,event,pres,fres,at)
             recommendation=evaluate(case.case_id,clock,gaps,study,event.triage_outcome,event.regulator_reportable)
             case.recommendation=recommendation
             rationale=self.llm.draft(recommendation,gaps)
-            self._event(case,"RECOMMENDATION_GENERATED","deterministic_rules","PENDING_REVIEWER",{"recommendation":recommendation,"rationale":rationale,"product_resolution":pres,"facility_resolution":fres,"applicable_sop":sop.doc_id if sop else None},at)
+            self._event(case,"RECOMMENDATION_GENERATED","deterministic_rules","PENDING_REVIEWER",{"recommendation":recommendation,"rationale":rationale,"product_resolution":pres,"facility_resolution":fres,"applicable_sop":sop.doc_id if sop else None,"study_eligibility":case.study_eligibility},at)
         return case
     def reopen_case(self,case,reason,at=None):
         at=at or datetime.now(timezone.utc)

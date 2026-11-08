@@ -15,6 +15,12 @@ class ExcursionEvent:
 @dataclass
 class Product:
     product_ref:str; product_name:str|None; storage_spec_text:str|None; stability_study_ref:str|None; tenant_code:str|None
+    identifiers:tuple[str,...]=()
+    source_row:int|None=None
+    @property
+    def key(self): return f"{self.tenant_code}|product|{self.source_row or self.product_ref}"
+    @property
+    def all_identifiers(self): return tuple(v for v in (self.product_ref,self.product_name,*self.identifiers) if v)
 
 @dataclass
 class Facility:
@@ -27,6 +33,8 @@ class SOP:
 @dataclass
 class Study:
     study_ref:str; product_ref:str|None; readable:bool; outcome:str|None; permitted_excursion_text:str|None; tenant_code:str|None
+    study_type:str|None=None
+    source_row:int|None=None
 
 @dataclass
 class Alias:
