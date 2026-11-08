@@ -1,50 +1,13 @@
-# Data Model
+# Data contracts — implemented versus target
 
-## Modeling approach
+Executable dataclasses are in `prototype/src/adjudication/domain/models.py`; CSV/JSON fields in `reporting/report_builder.py` and `cli.py` are the current API. `Product.key` is tenant+source-row scoped, not an authoritative global pharmaceutical ID. Source identifiers are retained together. Alias observations retain source row, human attribution/date/comment, negative assertions and candidates; these are not automatically qualified master-data approvals.
 
-Separate source facts, canonical entities, case facts, and temporal versions.
+SOP candidates retain tenant, document family, facility scope, revision dates and annexure location. Multiple effective revisions in the same family conflict; no `ORDER BY effective_from DESC LIMIT1` override is permitted. Unknown free-text facility scope and missing annexure contents abstain. Business applicability uses excursion start (explicit alert fallback), not today's latest revision.
 
-## Core entities
+Study eligibility requires tenant ownership, presentation/purpose/readability and a qualified relationship, not matching brand text alone. The prototype checks metadata and raises uncertainty; no validated stability-envelope arithmetic is implemented.
 
-| Entity | Purpose | Important fields |
-|---|---|---|
-| `ExcursionEvent` | Temperature excursion alert | `event_id`, `alert_ts_utc`, `excursion_start_utc`, `product_ref_as_received`, `raw_payload` |
-| `Case` | Adjudication unit | `case_id`, `state`, `opened_at`, `reopen_count` |
-| `CaseEvent` | Immutable workflow history | `event_id`, `case_id`, `event_type`, `occurred_at`, `actor`, `payload` |
-| `Product` | Canonical product | `product_id`, `canonical_name`, `presentation` |
-| `ProductAlias` | Alternative identifiers | `alias_value`, `canonical_product_id`, `confidence`, `source` |
-| `Facility` | Canonical physical site | `facility_id`, `canonical_name`, `timezone` |
-| `Specification` | Versioned storage requirement | `product_id`, `storage_condition`, `effective_from`, `effective_to` |
-| `SOPRevision` | Versioned procedure | `doc_id`, `revision`, `effective_from`, `effective_to` |
-| `StabilityStudy` | Stability evidence | `study_id`, `product_id`, `readable`, `outcome`, `permitted_excursion` |
-| `EvidenceItem` | Case-linked evidence | `evidence_id`, `case_id`, `source_system`, `retrieved_at`, `content_hash` |
-| `Recommendation` | Draft disposition and rationale | `case_id`, `rules_version`, `model_version`, `prompt_version`, `proposed_disposition` |
-| `Disposition` | Human-approved outcome | `case_id`, `decision`, `decided_by`, `decided_at`, `override_reason` |
-| `Notification` | Regulatory notification record | `case_id`, `due_at`, `submitted_at`, `status` |
+Notification result separates `applicability`, `policy_status`, `notification_evidence`, `status`, optional due time and `source_window_assessment`. Imported `reg_window_hours` is an observation, not an authoritative legal policy. Receipt offset is source evidence, not a submission event made by this tool.
 
-## Time-based queries
+Each source alert produces a parent attempt with one original clock event. A source reopen flag produces a linked attempt; its `REGULATORY_CLOCK_LINKED` contains the original clock snapshot and source event ID. Missing actual recall chronology remains explicit. `HISTORICAL_DISPOSITION_IMPORTED` uses `source_import`; no fresh signature exists and `new_approval` stays null.
 
-The system must answer: *“What storage specification applied to this product on 12 May 2026?”* and *“Which SOP revision governed this facility at the time of the excursion?”*
-
-```sql
-SELECT *
-FROM product_specification
-WHERE product_id = :product_id
-  AND effective_from <= :as_at_date
-  AND (effective_to IS NULL OR effective_to > :as_at_date)
-ORDER BY effective_from DESC
-LIMIT 1;
-```
-
-## Time rules
-
-- System timestamps are UTC.
-- Reviewer activity retains original local timestamp and UTC equivalent.
-- Facility timezone corrections are versioned.
-- `alert_ts_utc` drives the regulatory clock.
-- Document and specification lookups use case-relevant date.
-- Corrections create new versions; historical records retain original references.
-
-## Case reopening
-
-A reopened case is a new adjudication attempt linked to the same underlying event, preserving original evidence, recommendation, decision, and override reason.
+The manifest records workbook SHA256, available Git revision, run as-at, rules and reference-policy versions. It is a snapshot manifest, not a bitemporal database. Target evidence blobs, signatures, legal approvals, cumulative batch exposure, invoice links, carrier claims and known-at historical snapshots are not implemented.

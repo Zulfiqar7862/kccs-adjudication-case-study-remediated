@@ -1,19 +1,9 @@
-# Validation and Test Strategy
+# Validation boundaries
 
-## Correctness today
+Synthetic tests run without the confidential workbook; workbook tests use `KCCS_WORKBOOK` or the ignored data path and skip cleanly if absent. Regression groups cover separated clocks, no-authority triage, tenant/study isolation, alias provenance/conflict abstention, SOP overlaps/annexures, reopen parents/clocks, historical import semantics, defensive snapshots, fixed-as-at manifests, offset/reject parsing, named cases, packaging/CI contract, synthetic CLI and absent-Git archive execution.
 
-- Validate notification due time equals `alert_ts_utc + reg_window_hours`.
-- Validate that a case notified within window can still have a late disposition.
-- Validate reopened cases retain original history and create separate attempt.
-- Validate missing/unreadable stability evidence produces evidence gap.
-- Validate source and canonical values remain traceable.
-- Validate every material transition produces audit event.
+These prove local invariants and prevent observed defects from recurring. They do not prove pharmacological release correctness, legal applicability, signed dispositions, queue fairness, Clause22 compliance of an unbuilt precedent index, production throughput/residency, seven-year retention or actual August2025 evidence reproduction. Bandit/dependency/secret checks have tool-specific limitations; configured workflows have not been run remotely.
 
-## Long-term reliability
+`comparison_report.json` presents source assistant draft, historical disposition, new advisory action and gaps. It labels them non-equivalent; no disposition accuracy is computed by matching different label vocabularies. Genuine shadow replay against independently adjudicated outcomes and promotion enforcement remains required. The adapted external diagnostic has a separate diff/justification and explicitly reports August2025 as NOT TESTABLE, not PASS.
 
-- Golden-case regression tests.
-- Property-based tests for clock and timezone edge cases.
-- Contract tests for adapters.
-- Data-quality monitoring for unresolved identities and conflicting references.
-- Audit-integrity checks.
-- Evaluation suites for rules, recommendations, and guardrails.
+See the separate remediation report and evidence logs for exact revisions, commands, exit codes and current counts. Never infer workbook-backed success from a run that skipped the workbook.

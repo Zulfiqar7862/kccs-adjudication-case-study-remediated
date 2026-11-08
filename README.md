@@ -1,106 +1,41 @@
-# KCCS Sentinel Excursion Adjudication — Case Study Solution
+# KCCS — offline evidence-eligibility remediation
 
-This repository contains a solution for the KCCS Sentinel Excursion Adjudication case study.
+This is a deterministic **offline prototype**, not a production adjudication platform. It reads a confidential extract, resolves source-row candidates, flags uncertainty, exports original/reopened attempts and advisory review actions. It does not sign dispositions, auto-close alerts, notify regulators or call a model. All regulated decisions remain human responsibilities.
 
-It includes:
-
-- A structured written solution in `docs/`
-- Architecture, lifecycle, data-flow, deployment, and degradation diagrams in `diagrams/`
-- A locally runnable adjudication prototype in `prototype/`
-- Automated tests and GitHub Actions CI
-- A working log of assumptions, discarded approaches, and decisions
-
-## Windows PowerShell quick start
-
-```powershell
-git clone https://github.com/Zulfiqar78634/kccs-adjudication-case-study.git
-cd kccs-adjudication-case-study
-
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r prototype/requirements.txt
-pip install -e prototype
-
-# Place the supplied workbook here:
-# data/KCCS_Sentinel_Reference_Data_Pack.xlsx
-
-cd prototype
-pytest
-cd ..
-
-python -m adjudication.cli run --workbook data/KCCS_Sentinel_Reference_Data_Pack.xlsx --output-dir output
-```
-
-## macOS / Linux quick start
-
+## Install and test (from repository root)
 ```bash
-git clone https://github.com/Zulfiqar78634/kccs-adjudication-case-study.git
-cd kccs-adjudication-case-study
-
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-pip install -r prototype/requirements.txt
-pip install -e prototype
-
-# Place the supplied workbook here:
-# data/KCCS_Sentinel_Reference_Data_Pack.xlsx
-
-cd prototype
-pytest
-cd ..
-
-python -m adjudication.cli run --workbook data/KCCS_Sentinel_Reference_Data_Pack.xlsx --output-dir output
+python -m pip install -r prototype/requirements.txt -e prototype
+python -m pytest prototype/tests
+# Optional confidential input, never commit it:
+export KCCS_WORKBOOK=/absolute/path/KCCS_Sentinel_Reference_Data_Pack.xlsx
+python -m pytest prototype/tests
+python -m adjudication.cli run --workbook "$KCCS_WORKBOOK" --output-dir prototype/output --as-at 2026-11-08T12:00:00+00:00
 ```
+Without the workbook, workbook-backed tests skip; synthetic safety tests still execute. Alternatively put it in `data/KCCS_Sentinel_Reference_Data_Pack.xlsx`. Keep all real replay exports local and ignored.
 
-## What the prototype does
-
-The prototype implements the most critical and difficult component: the **case adjudication and regulatory-clock service**.
-
-It:
-
-- Loads the supplied workbook.
-- Validates required sheets and columns.
-- Normalizes timestamps to UTC.
-- Creates auditable adjudication cases.
-- Calculates the regulatory notification clock from `alert_ts_utc`.
-- Resolves product and facility references using exact matches and reviewer-confirmed aliases.
-- Selects SOP revisions effective at the alert date.
-- Identifies missing or unreadable stability evidence.
-- Produces deterministic recommendations.
-- Records reviewer overrides and dispositions.
-- Supports reopened cases without overwriting history.
-- Writes JSON and CSV operational outputs.
-
-## LLM position
-
-The prototype uses a **bounded LLM boundary**, but the core adjudication path is deterministic.
-
-The LLM is intended to:
-
-- Summarize available evidence.
-- Draft a reviewer-facing rationale.
-- Identify uncertainties and evidence gaps.
-- Propose a review action.
-
-It does **not**:
-
-- Calculate the regulatory clock.
-- Decide a regulated disposition.
-- Auto-close a case.
-- Override deterministic compliance rules.
-- Invent evidence or cite unavailable documents.
-
-The default implementation uses a deterministic rationale stub so the project runs locally without an API key. A production LLM integration can be added behind the same interface, with prompt/model versioning, source-grounding validation, and human approval.
-
-## Repository layout
-
-```text
-docs/        Written case-study deliverables
-diagrams/    Mermaid architecture and workflow diagrams
-data/        Supplied workbook location; workbook is gitignored
-prototype/   Runnable adjudication service, tests, and outputs
-scripts/     Local utilities
-.github/     CI and contribution workflow
+PowerShell: create `.venv`, activate `.\.venv\Scripts\Activate.ps1`, run the same pip/pytest commands, then from root:
+```powershell
+./prototype/run.ps1 -Workbook "C:\private\KCCS_Sentinel_Reference_Data_Pack.xlsx" -OutputDir "prototype/output" -AsAt "2026-11-08T12:00:00+00:00"
 ```
+Linux PowerShell was exercised; native Windows and Docker are not validated. Docker installs the actual package; mount private data read-only and an output volume if using it. GNU make recipes: `make setup`, `make test`, `make run`, `make e2e`; Make itself was unavailable in the remediation environment. Their equivalent Python commands were exercised.
+
+## Safe synthetic CLI without private data
+```bash
+python -m adjudication.synthetic prototype/output/synthetic.xlsx
+python -m adjudication.cli run --workbook prototype/output/synthetic.xlsx --output-dir prototype/output/synthetic --as-at 2026-01-10T12:00:00+00:00
+```
+CI executes this synthetic CLI, tests, Bandit, pip-audit and Gitleaks. Those workflow definitions are real, but no remote workflow run or publication was performed during remediation.
+
+## Output contract
+Seven files: `adjudication_report.json`, `case_summary.csv`, `evidence_gaps.csv`, `audit_log.jsonl`, `run_manifest.json`, `rejected_rows.csv`, `comparison_report.json`. The supplied extract yields 420 source events and 481 attempts (61 reopen flags), not 481 independent regulatory clocks. Read the actual filenames in `cli.py` if integrating; all are local mutable exports. Fixed input, revision and `--as-at` reproduce bytes; this is not bitemporal reconstruction or seven-year immutable retention.
+
+`historical_disposition` and `HISTORICAL_DISPOSITION_IMPORTED` describe source history; `new_approval` is always null. Compatibility field `proposed_disposition` contains an **advisory review action**, not a regulated outcome. Source `NON_ACTIONABLE` is parsed but is never permission to auto-close. The comparison report intentionally does not equate advisory actions with historical disposition labels or claim model accuracy.
+
+Notification applicability, qualified policy, source receipt evidence and assessment are separate. Unidentified jurisdictions remain `POLICY_UNKNOWN` even when the extract supplies a numeric window; a separate extracted-window comparison is not a legal breach finding. Brazil/India/EU policies require explicit applicability/jurisdiction, and the unidentified US programme requires a named timezone/business calendar/holiday set/cutoff. No universal 72-hour fallback.
+
+Tenant-scoped identifiers preserve all product rows, aliases remain observations/candidates, study purpose/presentation/ownership are checked, and SOP overlap/unknown site/annexure limits abstain. Real study bodies, approvals and legal policy bindings still require qualification. No cross-tenant precedent index is implemented; tenant-safe lookup of the scoped master is not proof of Clause22 compliance for a future index.
+
+## Boundaries and evidence
+See `docs/REMEDIATION_PLAN.md`, `docs/08-validation-and-test-strategy.md`, `docs/09-risks-assumptions-and-open-questions.md`, and `docs/working-log/remediation-retrospective.md`. Architecture diagrams describe target design, not deployed components. No scripts/ directory or running web service is provided. The separate remediation report contains actual command logs, revision identity and named-case traces; no confidential pack or output belongs in this source archive.

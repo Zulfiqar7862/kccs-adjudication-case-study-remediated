@@ -1,0 +1,11 @@
+# Remediation retrospective — 8 November2026 (Europe/Berlin)
+
+This entry is retrospective, not a reconstructed contemporaneous AI session. The independent local E2E review and supplied diagnostic identified baseline defects despite15 passing tests. The remediation used AI-assisted inspection/implementation, retained local red/green test commits and command logs outside the confidential-data-free source archive. Actual effort hours and earlier sessions are unavailable; no numeric estimate or QA approval is invented.
+
+Kept: conservative tenant-scoped source-row identities, uncertainty/provenance, separate notification applicability/policy/evidence/assessment, original clocks across reopen flags, explicitly imported history, defensive audit exports, deterministic snapshot manifests and synthetic CI fixtures.
+
+Discarded: historical NON_ACTIONABLE as permission to close; last-wins aliases; latest-start SOP resolution over overlaps; cross-tenant identifier lookup; treating source imported decisions as fresh signatures; claims that a mutable JSON export is immutable event sourcing; confidence scores without calibration.
+
+Confidently wrong and caught: the early remediation accepted extracted numeric windows as sufficient to flag legal breaches. A further regression demonstrated that unknown jurisdiction must remain POLICY_UNKNOWN while source-window lateness is only an observation. The fix separated these semantics. Another initial adaptation expected the EXC-107133 presentation alias to become authoritative; the source comment says different presentation, so the correct safe result is a tenant-owned candidate requiring confirmation, not a canonical scientific identity.
+
+Operational learning: source archives/Docker images may not contain Git; a red test reproduced the manifest crash and the green fix records unavailable provenance. pip-audit --strict --skip-editable rejected the local editable distribution, so the workflow audits the public requirements instead; this is an explicitly changed scan scope, not a falsely green environment audit. No live model, external submission, push or hosted CI run occurred. See git history and the separate evidence/report for actual red/green results and limitations.

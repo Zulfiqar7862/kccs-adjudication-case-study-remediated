@@ -1,52 +1,42 @@
-# Where We Land
+# Where we land, and why
 
-## Position
+## The problem and the boundary
 
-KCCS should build an **adjudication control plane**, not another isolated rules engine or a general-purpose AI assistant. The platform should make excursion cases traceable, time-correct, evidence-linked, and reviewable, while using AI to prepare and explain decisions rather than silently make regulated dispositions.
+KCCS sells a defensible custody record. Section2's EXC-107133 took nearly two hours because identity, effective SOP authority, prior lane evidence and the carrier obligation had to be established, although the apparent stability answer was found early. A language model generating a plausible conclusion faster would miss the actual cost and repeat the failed January pilot. Build an evidence control plane; keep the existing non-actionable rules until independently qualified. Human QA retains all regulated disposition authority.
 
-## Requirements and traceability
+The running slice is the dangerous boundary between messy source evidence and asserted authority. It retains all rows, separates observation from authorization, refuses ambiguous tenant/product/study/SOP bindings, preserves original clocks across reopen flags and distinguishes imported history from newly signed decisions. It exports deterministic eligibility review actions and evidence gaps. It deliberately cannot declare insulin scientifically releasable from an index row, read a handwritten annexure, or infer the applicable law from an arbitrary numeric window. That abstention is a valid result, not an incomplete numerical decision disguised as success.
 
-| Requirement | Attribute | Brief/pack evidence | Design consequence |
-|---|---|---|---|
-| Preserve the regulatory notification clock | Time correctness, auditability | `reg_window_hours` and `hours_to_notification` run from `alert_ts_utc`; `days_to_disposition` is separate | Store immutable alert time and calculate clock state from event time |
-| Support incomplete and inconsistent master data | Data quality, resolution | Product references may be brand names, SKUs, GTINs, or blank; facility records duplicate physical sites | Maintain source values alongside canonical resolved entities and confidence/provenance metadata |
-| Preserve evidence available at decision time | Temporal correctness | `spec_text_as_received` may differ from the current product master | Store effective-dated snapshots and resolve references as-at the relevant case date |
-| Support human accountability | Auditability, explainability | Reviewers override recommendations; many overrides have no recorded reason | Capture recommendation, inputs, evidence, decision, actor, reason, and timestamp immutably |
-| Avoid unsafe automation | Safety, compliance | Rules-engine recommendation column now contains assistant drafts; stability index is incomplete | Treat AI output as decision support; require explicit human approval for regulated dispositions |
-| Operate across heterogeneous systems | Integration, resilience | Nine systems with different access methods and known defects | Use adapters, normalization, reconciliation, and failure isolation |
-| Handle real operational delays | Workflow, observability | Review queue waits and late dispositions are normal | Model waits, reminders, escalations, and clock-breach risk explicitly |
-| Support re-adjudication | History, correctness | 61 cases were re-adjudicated under bulletin TT-CB-114 | Version cases and create a new adjudication attempt linked to the same event |
+## Actual board commitments (brief Section6, not invented quotations)
 
-## Deliberately not building
+| # | Commitment | Prototype status / rollout measurement |
+|---|---|---|
+|1|Median alert-to-signed disposition under24 hours by end of first full quarter after go-live; baseline6.2 days|Not achieved or measured by an offline replay; measure signed timestamps separately from active handling time.|
+|2|At least70% of alerts closed without reaching a person; baseline about64% overall|Not implemented here. Source triage labels are not closure permission. Qualify an independent closure cohort with false-closure review.|
+|3|Full basis for any disposition within1 hour, for7 years|Deterministic defensive audit export implemented; durable retention, retrieval SLA, original evidence blobs and signatures not implemented.|
+|4|Within tab13 cost ceiling|Cost arithmetic below; no measured production bill.|
+|5|No notifiable deviation notified outside its window|Unknown-policy and applicability states implemented; actual legal configuration, filings, receipts and operational escalation not implemented.|
+|6|First customer within90 days of design sign-off, all34 within9 months|Proposed phased plan only, not delivery evidence.|
 
-- A fully autonomous disposition engine.
-- A complete enterprise MDM platform.
-- A replacement for ERP, LIMS, document management, or Sentinel.
-- A generic document-understanding product.
-- Automatic regulatory filing.
+Dr Rao's approval condition requires replay against known historical outcomes, showing different decisions and reasons, before initial go-live **and every subsequent change**. She permits automated closures, not automated regulated decisions. The board prefers certainty for one customer over an unsafe broad rollout. The offline advisory-vs-history export is useful diagnostic scaffolding, but it does not satisfy a qualified disposition-outcome replay or enforce a signed promotion gate.
 
-## Phased rollout
+## Order of delivery
 
-| Phase | Duration | Scope | Outcome |
-|---|---:|---|---|
-| Phase 0 — Foundations | 4–6 weeks | Canonical data model, ingestion, temporal resolution, audit log, prototype | Reliable case timeline and evidence linkage |
-| Phase 1 — Pilot | 6–8 weeks | One tenant, reviewer workbench, notification clock, override capture | Reduced manual evidence gathering without changing accountability |
-| Phase 2 — Controlled production | 8–12 weeks | Rules plus assistant recommendations, evidence extraction, monitoring, rollback | Measurable queue-time and quality improvement |
-| Phase 3 — Scale | Ongoing | More tenants, adapters, stability coverage, closed-loop learning | Platform reuse and improved consistency |
+First, preserve tenant ownership, raw source rows, original alert timestamps, versions and imported outcome semantics. Resolve jurisdiction/applicability before computing a legal deadline; missing policy is unknown, never a fabricated72-hour breach. Second, acquire controlled study/SOP/annexure bodies with hashes, authoritative product/presentation identity, exact site/effective revision and human-confirmed exceptions. Third, isolate notifiable clocks from noisy triage queues, implement tenant-scoped precedent and a batch exposure ledger. Only then consider a constrained summarizer, multilingual reviewer UI, e-signatures and qualified closure automation. At every step demonstrate historical differences and failure behavior before promotion.
 
-## Ambiguities and positions
+The firmware incident requires a dependency graph from device/firmware to evidence, cases, new attempts and invoices. This patch preserves source reopen attempts/clocks; it does not reconstruct missing pre/post outcomes or withdraw invoices. The chiller incident needs event coalescing and fair tenant/deadline scheduling; a fast batch CLI is not proof of queue starvation safety. The August2025 request is NOT TESTABLE from an extract whose earliest alerts are later; no old study, SOP, series or signature is fabricated.
 
-| Ambiguity | Position |
-|---|---|
-| What happens when a stability study cannot be read? | Treat it as an evidence gap, not automatically as compliance failure |
-| Which timestamp governs the regulatory clock? | The alert timestamp |
-| Can an AI recommendation become a disposition? | No; it requires reviewer approval |
-| Should historical data be corrected in place? | No; correct forward-looking records and preserve original source values |
-| What if source systems disagree? | Preserve both values, expose conflict, and never silently overwrite evidence |
+## Pilot and rollout
 
-## Board items to challenge
+Propose Sahyadri from tab12: KCCS-managed SOPs reduce the initial document-authority integration boundary, and Site QA is the named signing role. Its6,800 monthly consignments are meaningful but smaller than Virent's14,200. Shared terminals and Hindi/Marathi site users require session isolation and reviewed translations. Absence of a listed residency clause is not permission to ignore law. Confirm the actual legal policy and document owner before approving the pilot. No agreement or approval is claimed.
 
-1. **“Use AI to automate adjudication end to end.”** Too strong. The correct objective is human-in-the-loop adjudication with measurable reduction in preparation and review time.
-2. **“Fix the data first, then build the system.”** Build temporal, provenance-aware ingestion now and make uncertainty visible.
-3. **“A single canonical product master will solve identity.”** Aliases, presentation differences, and stale references still require resolution and auditability.
-4. **“Measure success only by reduced reviewer time.”** Also measure evidence completeness, notification timeliness, consistency, auditability, and rework.
+Days1–30: establish evidence contracts, legal policies and historical evaluation cohort. Days31–60: shadow/manual operation for that one tenant with an independent notification path and restore drills. Days61–90: qualified go-live only with documented QA approval; otherwise stay manual and explain the delay. Expand tenants in cohorts through month9, with residency, language, signature and Clause22-specific gates. This is a proposed plan, not a promise backed by load measurements.
+
+## Costs and assumptions
+
+Tab13 gives2,050 human cases ×USD1.10 =USD2,255/month and11,400 screened alerts ×USD0.06 =USD684/month: USD2,939 for the stated two buckets, within the CFO'sUSD3,000 ceiling byUSD61. Confirm accounting overlap before treating this as a purchase budget. The USD3.10 platform fee ×128,000 consignments isUSD396,800 monthly; model spend cannot be inferred from that larger revenue. Annual reviewer loaded cost is(14×18+6×61+3×74)×1,800 =USD1,512,000.
+
+Always-on self-hosting atUSD5.67/hour costsUSD4,082.40 for a30-day720-hour month before retrieval, exceeding the entire model budget even on a quiet Sunday; at24 hours it costsUSD136.08/day. Prefer no-model deterministic operations plus selectively invoked qualified regional models, subject to legal permissions and measured token volumes. No real token bill or cost-saving percentage is claimed. Ingestion/storage/indexing/seven-year retention are a separate capital line. A raw sizing assumption of10M readings/day×365×7×16bytes is408.8GB logical before metadata, indexes, replicas or evidence documents; this is not a provisioned storage plan.
+
+## Contradictions and positions
+
+The pack's alias notes contain negatives/conflicts, master identifiers are blank on some valid rows, SOP dates overlap and study pointers can point to a different presentation. Preserve contradictions and raise a gap; do not silently choose the latest or invent confidence. Existing history labels say what happened, not what is authorized today. The statutory windows are country/programme-specific; US business-day calendars and actual EU market applicability are not fully bound by the extract. Keep them unknown until supplied. Seven-year retention is a stated requirement, not an open question. Effort hours were not recorded; the covering note must say so rather than invent them.

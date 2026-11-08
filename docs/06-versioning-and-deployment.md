@@ -1,45 +1,7 @@
-# Versioning and Deployment
+# Replay identity and proposed promotion gate
 
-## Versioning
+Implemented: workbook SHA256, code commit when Git metadata/executable exist, explicit timezone-aware `--as-at`, rules bundle version, reference-policy versions, deterministic event IDs, stub model/prompt labels, defensive audit export and advisory/history comparison. Source archive runtime records unavailable commit provenance honestly. Run with a fixed as-at for repeatability. This is a reconstruction of the current input snapshot, not historical known-at reproduction.
 
-| Artifact | Versioning approach | Why |
-|---|---|---|
-| Case event | Immutable schema version | Replay and reconstruction |
-| Canonical entity | Bitemporal record | Business-effective and correction history |
-| Specification / SOP | Effective-dated revision | Determines applicable rule at case time |
-| Deterministic rule | Semantic version + bundle ID | Reproducible decisions |
-| AI model | Model ID, version, provider, snapshot | Evaluation and rollback |
-| Prompt | Content-addressed version | Prevents silent behavior change |
-| Reference data | Snapshot ID and extraction timestamp | Reproducible resolution |
-| Workflow definition | Versioned state machine | Unambiguous lifecycle |
-| API contract | OpenAPI version | Protects integrations |
+Not implemented: immutable/bitemporal evidence retention, signed release manifests, model qualification, enforced deployment approvals/rollback or seven-year service guarantees. No live model is configured. A provider sunset must result in approved fallback/manual operation, not an unqualified replacement.
 
-## Decision reproducibility
-
-Store case ID, adjudication attempt ID, evidence hashes, resolved entities, rule version, model and prompt versions, assistant output, guardrail result, reviewer decision, override reason, and release version.
-
-## Deployment pipeline
-
-```mermaid
-flowchart LR
-    Dev[Commit] --> CI[CI: lint, unit, contract tests]
-    CI --> Integration[Integration tests]
-    Integration --> Security[Security scan]
-    Security --> Staging[Staging]
-    Staging --> Eval[Evaluation suite]
-    Eval --> Approval[Change approval]
-    Approval --> Canary[Canary]
-    Canary --> Monitor[Monitor]
-    Monitor --> Full[Full rollout]
-    Monitor --> Rollback[Rollback]
-```
-
-## Controls
-
-- Backward-compatible database migrations.
-- Versioned rule and reference-data bundles.
-- Evaluated prompts and models before release.
-- Feature flags for assistant participation and auto-triage.
-- Canary rollout.
-- Rollback of rule bundle, model config, prompt version, and application release.
-- Post-deploy verification of ingestion lag, clock calculations, audit writes, evidence linkage, and assistant failure rate.
+Proposed gate before every change: freeze tenant-isolated evidence/cohort, run incumbent and candidate against independently known historical outcomes, produce every difference with evidence/reasons, have QA adjudicate changes, require Dr Rao's approval then canary the approved tenant only. Repeat for rule, identity/reference, SOP, prompt, model and policy changes. Current `comparison_report.json` explicitly compares non-equivalent advisory actions and source outcomes; it is not that qualified gate. GitHub workflows execute synthetic safety checks and real security commands but cannot replace QA approval or prove residency.

@@ -3,7 +3,7 @@
 Baseline: 1e5e19706a225616211c7efca05d89f9f7f3e09b. Local branch only. Independent review found the defects; prior passing tests did not establish workbook correctness.
 
 ## Ordered patches (red regression commit, then green implementation commit)
-1. Separate notification applicability, policy, receipt evidence, assessment. No default legal window; explicit supplied window is an extracted policy, not a jurisdiction inference. Named next-business-day policies need an explicit timezone/calendar/cutoff; unspecified US state policy remains unknown.
+1. Separate notification applicability, policy, receipt evidence, assessment. No default legal window; explicit supplied window is an extracted observation, not a qualified jurisdiction policy. Named next-business-day policies need an explicit timezone/calendar/cutoff; unspecified US state policy remains unknown.
 2. Parse triage independently of authorization. Historical non-actionable labels never authorize closure; notification action remains independent.
 3. Tenant-scoped multi-identifier products and study eligibility, retaining every master row and presentation uncertainty.
 4. Alias candidates/conflicts/negatives/provenance; no unchecked transitive merge.

@@ -1,7 +1,7 @@
-# Executive Summary
+# Executive summary — implemented boundary versus proposed platform
 
-KCCS should build an adjudication control plane that makes excursion cases traceable, time-correct, evidence-linked, and reviewable. The platform should use deterministic rules for compliance-critical calculations and an LLM only as a constrained evidence-synthesis and rationale-drafting assistant.
+Build an evidence control plane before expanding automation. The expensive work is establishing entitlement to sign, not generating an answer. Retain the useful legacy non-actionable engine until its closure authority has been separately qualified; keep humans on regulated product dispositions. This patch deliberately delivers a smaller, fail-closed offline eligibility replay, not the whole platform.
 
-The first customer should be a high-volume tenant with mature QA processes and available historical cases. The initial release should focus on reliable case creation, regulatory-clock calculation, evidence linkage, reviewer workflow, and auditable reopened-case handling.
+Proposed first customer: Sahyadri Lifecare (tab12), because KCCS owns its managed-service SOPs and Site QA is the stated signer. Hindi/Marathi shop-floor access and shared-terminal privacy are explicit pilot gates. No listed residency clause is not a waiver of law; validate residency and contractual permission before deployment. No customer has approved this selection.
 
-The system must not autonomously sign regulated dispositions. It should reduce reviewer preparation time while preserving human accountability, evidence provenance, and auditability.
+Ship one qualified tenant within90 days of design sign-off, only after historical shadow replay and QA approval; phase all34 within9 months subject to the same gates. Those are targets, not achieved outcomes. The prototype's external model spend is zero because it has no model, not because production inference is free.
