@@ -44,3 +44,15 @@ def test_presentation_unverified_label_is_not_explicit_identity(event,data):
 def test_synthetic_expected_contract_is_real_not_workbook_label():
     expected=json.loads((Path(__file__).resolve().parents[1]/'fixtures/expected_outputs/sample_adjudication_report.json').read_text())
     assert expected['fixture']=='synthetic-v1' and expected['excursion_events']==2
+
+def test_archive_runtime_does_not_require_git_binary(tmp_path,monkeypatch):
+    from adjudication.synthetic import write_workbook
+    from adjudication.cli import run
+    p=tmp_path/'synthetic.xlsx';write_workbook(p)
+    real=subprocess.run
+    def without_git(args,**kwargs):
+        if args[0]=='git':raise FileNotFoundError('git intentionally absent')
+        return real(args,**kwargs)
+    monkeypatch.setattr(subprocess,'run',without_git)
+    run(p,tmp_path/'out',as_at='2026-01-10T12:00:00+00:00')
+    assert json.loads((tmp_path/'out/run_manifest.json').read_text())['code_commit'] is None
